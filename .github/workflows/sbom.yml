@@ -1,0 +1,46 @@
+
+name: Build SBOM and send to api
+on: push
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.save_sbom.outputs.test }}
+    name:  Build SBOM
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+      - run: npm install
+      - name: Create SBOM with CycloneDX
+        id: sbom
+        uses: CycloneDX/gh-node-module-generatebom@master 
+        with:
+            output: './test.app.bom.json'
+      - name: 'Setup jq'
+        uses: dcarbone/install-jq-action@v1.0.1
+        with:
+          version: "1.6"
+          force: 'false'
+      - name: save sbom
+        id: save_sbom
+        run: | 
+          echo "test<<EOF" >> $GITHUB_OUTPUT
+          echo "$(cat './test.app.bom.json')" >> $GITHUB_OUTPUT 
+          echo "EOF" >> $GITHUB_OUTPUT  
+      - name: Save Sbom to new file 
+        run: |    
+           echo -n "$(cat './test.app.bom.json')" > sbom_file.json 
+      - name: Print new file contents    
+        run: |  
+           echo "$(cat 'sbom_file.json')" 
+      - name: Call Api
+        run: |  
+          curl -k --request POST 'https://dt.cryptosoft.com:9443/api/v1/sbom/sbom-check' \
+          --header 'Content-Type: application/json' \
+          --data @sbom_file.json
+
+
+
