@@ -1,13 +1,19 @@
-name: learn-github-actions
-run-name: ${{ github.actor }} is learning GitHub Actions
-on: [push]
+name: Test Get Email from Github Username
+on:
+  workflow_dispatch:
+
 jobs:
-  check-bats-version:
+  get_user_email:
     runs-on: ubuntu-latest
+    name: A job to get a users email
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: get email
+        id: test
+        uses: evvanErb/get-github-email-by-username-action@v1.25
         with:
-          node-version: '14'
-      - run: npm install -g bats
-      - run: bats -v
+          github-username: 'evvanErb' # This is the input username
+          token: 'token' # This is an optional input of a PAT to use a more reliable way to get a user's email
+          
+      # Use the output from the `test` step
+      - name: Print the found email
+        run: echo "The email is ${{ steps.test.outputs.email }}" # Example of how to access output email
